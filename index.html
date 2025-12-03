@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPUS DigiPort - Digital Twin Demo for ONE</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; overflow: hidden; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Vessel data simulation
+    const generateVessels = () => [
+      { id: 'ONE ATLAS', imo: '9806043', type: 'Container', lat: 35.45, lng: 139.65, speed: 18.5, heading: 225, destination: 'Singapore', eta: '2024-12-08 14:30', fuel: 78, status: 'On Route' },
+      { id: 'ONE HAWK', imo: '9312345', type: 'Container', lat: 22.28, lng: 114.17, speed: 0, heading: 0, destination: 'Hong Kong', eta: 'Arrived', fuel: 45, status: 'At Berth' },
+      { id: 'ONE CRANE', imo: '9456789', type: 'Container', lat: 1.26, lng: 103.84, speed: 12.3, heading: 45, destination: 'Busan', eta: '2024-12-10 08:15', fuel: 62, status: 'On Route' },
+      { id: 'ONE FALCON', imo: '9567890', type: 'Container', lat: 37.47, lng: 126.62, speed: 0, heading: 180, destination: 'Busan', eta: 'Arrived', fuel: 33, status: 'Loading' },
+      { id: 'ONE EAGLE', imo: '9678901', type: 'Container', lat: 25.05, lng: 121.52, speed: 15.8, heading: 270, destination: 'Tokyo', eta: '2024-12-07 22:00', fuel: 55, status: 'On Route' },
+    ];
+
+    // Port data
+    const ports = [
+      { name: 'Tokyo', lat: 35.65, lng: 139.75, congestion: 65, waitTime: 4.2, berths: 12, vessels: 8 },
+      { name: 'Singapore', lat: 1.29, lng: 103.85, congestion: 82, waitTime: 6.8, berths: 20, vessels: 18 },
+      { name: 'Busan', lat: 35.10, lng: 129.03, congestion: 45, waitTime: 2.1, berths: 15, vessels: 7 },
+      { name: 'Hong Kong', lat: 22.30, lng: 114.18, congestion: 73, waitTime: 5.5, berths: 10, vessels: 8 },
+      { name: 'Shanghai', lat: 31.23, lng: 121.47, congestion: 88, waitTime: 8.2, berths: 25, vessels: 23 },
+    ];
+
+    // AI Predictions
+    const aiPredictions = [
+      { type: 'ETA Adjustment', vessel: 'ONE ATLAS', message: 'Recommended speed reduction to 16.5 kts due to weather. New ETA: 14:45 (+15 min)', severity: 'warning', saving: '$2,400 fuel savings' },
+      { type: 'Port Congestion', port: 'Singapore', message: 'High congestion expected Dec 8-10. Consider berth window adjustment.', severity: 'alert', saving: 'Avoid 8hr delay' },
+      { type: 'Maintenance Alert', vessel: 'ONE CRANE', message: 'Main engine bearing temperature trending up. Schedule inspection at next port.', severity: 'warning', saving: 'Prevent $180K repair' },
+      { type: 'Fuel Optimization', vessel: 'ONE EAGLE', message: 'Route optimization available via alternate waypoint. Save 12 tons fuel.', severity: 'info', saving: '$8,400 savings' },
+      { type: 'Cargo Demand', route: 'Asia-Europe', message: 'Reefer demand surge predicted for Week 51. Consider capacity adjustment.', severity: 'info', saving: '+$45K revenue opportunity' },
+    ];
+
+    // Container tracking data
+    const containers = [
+      { id: 'ONEU1234567', type: 'Reefer', temp: -18.2, status: 'In Transit', vessel: 'ONE ATLAS', origin: 'Tokyo', destination: 'Singapore', position: 'Bay 42, Row 3' },
+      { id: 'ONEU2345678', type: 'Dry', temp: null, status: 'At Port', vessel: '-', origin: 'Busan', destination: 'Los Angeles', position: 'Terminal A, Block 5' },
+      { id: 'ONEU3456789', type: 'Reefer', temp: -20.1, status: 'In Transit', vessel: 'ONE CRANE', origin: 'Singapore', destination: 'Busan', position: 'Bay 28, Row 1' },
+      { id: 'ONEU4567890', type: 'Dry', temp: null, status: 'Loading', vessel: 'ONE FALCON', origin: 'Shanghai', destination: 'Tokyo', position: 'Crane 3' },
+      { id: 'ONEU5678901', type: 'Reefer', temp: -18.8, status: 'In Transit', vessel: 'ONE EAGLE', origin: 'Hong Kong', destination: 'Yokohama', position: 'Bay 15, Row 2' },
+      { id: 'ONEU6789012', type: 'Dry', temp: null, status: 'At Port', vessel: '-', origin: 'Tokyo', destination: 'Seattle', position: 'Terminal B, Block 12' },
+    ];
+
+    function DigitalTwinDemo() {
+      const [activeTab, setActiveTab] = useState('fleet');
+      const [selectedVessel, setSelectedVessel] = useState(null);
+      const [vessels, setVessels] = useState(generateVessels());
+      const [time, setTime] = useState(new Date());
+      const [showAIPanel, setShowAIPanel] = useState(true);
+      const [searchQuery, setSearchQuery] = useState('');
+
+      // Simulate real-time updates
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setTime(new Date());
+          setVessels(prev => prev.map(v => ({
+            ...v,
+            speed: v.status === 'On Route' ? Math.max(10, Math.min(22, v.speed + (Math.random() - 0.5) * 0.5)) : v.speed,
+            fuel: Math.max(0, v.fuel - (v.status === 'On Route' ? 0.02 : 0)),
+            lat: v.status === 'On Route' ? v.lat + (Math.random() - 0.5) * 0.005 : v.lat,
+            lng: v.status === 'On Route' ? v.lng + (Math.random() - 0.5) * 0.005 : v.lng,
+          })));
+        }, 2000);
+        return () => clearInterval(interval);
+      }, []);
+
+      const getStatusColor = (status) => {
+        switch(status) {
+          case 'On Route': return '#22c55e';
+          case 'At Berth': return '#3b82f6';
+          case 'Loading': return '#f59e0b';
+          default: return '#6b7280';
+        }
+      };
+
+      const getSeverityColor = (severity) => {
+        switch(severity) {
+          case 'alert': return { bg: '#fef2f2', border: '#ef4444', text: '#dc2626' };
+          case 'warning': return { bg: '#fffbeb', border: '#f59e0b', text: '#d97706' };
+          case 'info': return { bg: '#eff6ff', border: '#3b82f6', text: '#2563eb' };
+          default: return { bg: '#f3f4f6', border: '#9ca3af', text: '#6b7280' };
+        }
+      };
+
+      const filteredContainers = containers.filter(c => 
+        c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.vessel.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.destination.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      return (
+        <div style={{ 
+          width: '100%', 
+          height: '100vh', 
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          fontFamily: 'Arial, sans-serif',
+          color: '#e2e8f0',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
+          {/* Header */}
+          <div style={{ 
+            background: 'rgba(0,51,102,0.95)', 
+            padding: '12px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '2px solid #f77f00'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ 
+                background: '#f77f00', 
+                padding: '6px 12px', 
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                fontSize: '18px',
+                color: '#fff'
+              }}>
+                OPUS DigiPort
+              </div>
+              <span style={{ fontSize: '14px', color: '#94a3b8' }}>Digital Twin Platform for ONE | ONEのためのデジタルツインプラットフォーム</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                <span style={{ color: '#22c55e', marginRight: '8px' }}>●</span>
+                Live Data | ライブデータ
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#00b4d8' }}>
+                {time.toLocaleTimeString('en-US', { hour12: false })} UTC
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div style={{ 
+            background: 'rgba(30,41,59,0.8)', 
+            padding: '8px 24px',
+            display: 'flex',
+            gap: '4px',
+            flexWrap: 'wrap'
+          }}>
+            {[
+              { id: 'fleet', label: 'Fleet Monitoring', jp: '船隊監視', icon: '🚢' },
+              { id: 'ports', label: 'Port Intelligence', jp: '港湾情報', icon: '⚓' },
+              { id: 'cargo', label: 'Cargo Tracking', jp: '貨物追跡', icon: '📦' },
+              { id: 'analytics', label: 'AI Analytics', jp: 'AI分析', icon: '📊' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  background: activeTab === tab.id ? '#003366' : 'transparent',
+                  border: activeTab === tab.id ? '1px solid #00b4d8' : '1px solid transparent',
+                  color: activeTab === tab.id ? '#00b4d8' : '#94a3b8',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: activeTab === tab.id ? 'bold' : 'normal',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>{tab.icon}</span>
+                {tab.label} <span style={{ fontSize: '10px', opacity: 0.7 }}>| {tab.jp}</span>
+              </button>
+            ))}
+            <div style={{ flex: 1 }} />
+            <button
+              onClick={() => setShowAIPanel(!showAIPanel)}
+              style={{
+                background: showAIPanel ? '#f77f00' : 'rgba(247,127,0,0.2)',
+                border: '1px solid #f77f00',
+                color: '#fff',
+                padding: '10px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              🤖 AI Insights {showAIPanel ? 'ON' : 'OFF'}
+            </button>
+          </div>
+
+          {/* Main Content */}
+          <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+            {/* Left Panel - Main View */}
+            <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'auto' }}>
+              
+              {activeTab === 'fleet' && (
+                <>
+                  {/* Map Area (Simulated) */}
+                  <div style={{ 
+                    flex: 1, 
+                    minHeight: '350px',
+                    background: 'linear-gradient(180deg, #0c4a6e 0%, #164e63 100%)',
+                    borderRadius: '12px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    border: '1px solid #1e40af'
+                  }}>
+                    {/* Grid lines */}
+                    <div style={{ position: 'absolute', inset: 0, opacity: 0.1 }}>
+                      {[...Array(10)].map((_, i) => (
+                        <div key={`h${i}`} style={{ position: 'absolute', left: 0, right: 0, top: `${i * 10}%`, height: '1px', background: '#fff' }} />
+                      ))}
+                      {[...Array(10)].map((_, i) => (
+                        <div key={`v${i}`} style={{ position: 'absolute', top: 0, bottom: 0, left: `${i * 10}%`, width: '1px', background: '#fff' }} />
+                      ))}
+                    </div>
+                    
+                    {/* World Map Outline (Simplified Asia-Pacific) */}
+                    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.15 }} viewBox="0 0 100 60">
+                      <path d="M10,20 Q20,15 30,18 L35,25 Q40,30 50,28 L60,22 Q70,18 80,20 L85,30 Q88,40 80,45 L70,48 Q60,50 50,45 L40,42 Q30,38 25,35 L20,30 Q15,25 10,20 Z" 
+                            fill="none" stroke="#00b4d8" strokeWidth="0.5"/>
+                    </svg>
+                    
+                    {/* Ports */}
+                    {ports.map((port, i) => (
+                      <div
+                        key={port.name}
+                        style={{
+                          position: 'absolute',
+                          left: `${12 + i * 18}%`,
+                          top: `${25 + (i % 3) * 22}%`,
+                          transform: 'translate(-50%, -50%)',
+                          zIndex: 10
+                        }}
+                      >
+                        <div style={{
+                          width: '14px',
+                          height: '14px',
+                          background: port.congestion > 70 ? '#ef4444' : port.congestion > 50 ? '#f59e0b' : '#22c55e',
+                          borderRadius: '50%',
+                          border: '2px solid #fff',
+                          boxShadow: '0 0 15px rgba(255,255,255,0.5)',
+                          animation: 'pulse 2s infinite'
+                        }} />
+                        <div style={{ 
+                          fontSize: '11px', 
+                          color: '#fff', 
+                          marginTop: '4px',
+                          textAlign: 'center',
+                          textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                          fontWeight: 'bold'
+                        }}>
+                          {port.name}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Vessels */}
+                    {vessels.map((vessel, i) => (
+                      <div
+                        key={vessel.id}
+                        onClick={() => setSelectedVessel(vessel)}
+                        style={{
+                          position: 'absolute',
+                          left: `${18 + i * 15 + Math.sin(Date.now() / 2000 + i) * 2}%`,
+                          top: `${40 + i * 8 + Math.cos(Date.now() / 2000 + i) * 2}%`,
+                          transform: 'translate(-50%, -50%)',
+                          cursor: 'pointer',
+                          transition: 'transform 0.3s',
+                          zIndex: 20
+                        }}
+                      >
+                        <div style={{
+                          width: '28px',
+                          height: '28px',
+                          background: selectedVessel?.id === vessel.id ? '#f77f00' : '#003366',
+                          border: `2px solid ${getStatusColor(vessel.status)}`,
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '16px',
+                          boxShadow: selectedVessel?.id === vessel.id ? '0 0 25px #f77f00' : '0 2px 10px rgba(0,0,0,0.4)',
+                          transform: `rotate(${vessel.heading}deg)`,
+                          transition: 'all 0.3s'
+                        }}>
+                          🚢
+                        </div>
+                        <div style={{
+                          fontSize: '10px',
+                          color: '#fff',
+                          marginTop: '4px',
+                          textAlign: 'center',
+                          whiteSpace: 'nowrap',
+                          textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                          fontWeight: selectedVessel?.id === vessel.id ? 'bold' : 'normal'
+                        }}>
+                          {vessel.id.replace('ONE ', '')}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Legend */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '12px',
+                      left: '12px',
+                      background: 'rgba(0,0,0,0.75)',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      fontSize: '11px'
+                    }}>
+                      <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#00b4d8' }}>Status Legend | 状態凡例</div>
+                      <div style={{ display: 'flex', gap: '16px' }}>
+                        <span><span style={{ color: '#22c55e' }}>●</span> On Route | 航行中</span>
+                        <span><span style={{ color: '#3b82f6' }}>●</span> At Berth | 着岸</span>
+                        <span><span style={{ color: '#f59e0b' }}>●</span> Loading | 荷役中</span>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px',
+                      left: '12px',
+                      background: 'rgba(0,51,102,0.9)',
+                      padding: '10px 18px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      border: '1px solid #00b4d8'
+                    }}>
+                      🌏 Asia-Pacific Fleet View | アジア太平洋船隊ビュー
+                    </div>
+
+                    {/* Stats */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      background: 'rgba(0,0,0,0.75)',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      fontSize: '11px'
+                    }}>
+                      <div style={{ color: '#94a3b8', marginBottom: '4px' }}>Fleet Status</div>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <span style={{ color: '#22c55e' }}>{vessels.filter(v => v.status === 'On Route').length} Sailing</span>
+                        <span style={{ color: '#3b82f6' }}>{vessels.filter(v => v.status === 'At Berth').length} Berthed</span>
+                        <span style={{ color: '#f59e0b' }}>{vessels.filter(v => v.status === 'Loading').length} Loading</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vessel Cards */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+                    gap: '12px' 
+                  }}>
+                    {vessels.map(vessel => (
+                      <div
+                        key={vessel.id}
+                        onClick={() => setSelectedVessel(vessel)}
+                        style={{
+                          background: selectedVessel?.id === vessel.id ? 'rgba(247,127,0,0.2)' : 'rgba(30,41,59,0.8)',
+                          border: selectedVessel?.id === vessel.id ? '2px solid #f77f00' : '1px solid #334155',
+                          borderRadius: '10px',
+                          padding: '14px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                          <span style={{ fontWeight: 'bold', fontSize: '13px', color: '#00b4d8' }}>{vessel.id}</span>
+                          <span style={{ 
+                            fontSize: '9px', 
+                            background: getStatusColor(vessel.status),
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            color: '#fff',
+                            fontWeight: 'bold'
+                          }}>
+                            {vessel.status}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '8px' }}>
+                          → {vessel.destination}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                          <span>⚡ {vessel.speed.toFixed(1)} kts</span>
+                          <span style={{ color: vessel.fuel > 50 ? '#22c55e' : vessel.fuel > 25 ? '#f59e0b' : '#ef4444' }}>
+                            ⛽ {vessel.fuel.toFixed(0)}%
+                          </span>
+                        </div>
+                        {/* Fuel bar */}
+                        <div style={{ marginTop: '8px', height: '4px', background: '#1e293b', borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{
+                            width: `${vessel.fuel}%`,
+                            height: '100%',
+                            background: vessel.fuel > 50 ? '#22c55e' : vessel.fuel > 25 ? '#f59e0b' : '#ef4444',
+                            transition: 'width 0.5s'
+                          }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'ports' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                  {ports.map(port => (
+                    <div key={port.name} style={{
+                      background: 'rgba(30,41,59,0.8)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      border: '1px solid #334155'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <h3 style={{ margin: 0, color: '#00b4d8', fontSize: '18px' }}>⚓ {port.name}</h3>
+                        <span style={{
+                          background: port.congestion > 70 ? '#ef4444' : port.congestion > 50 ? '#f59e0b' : '#22c55e',
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          {port.congestion > 70 ? 'HIGH CONGESTION' : port.congestion > 50 ? 'MODERATE' : 'LOW'}
+                        </span>
+                      </div>
+                      
+                      <div style={{ marginBottom: '16px' }}>
+                        <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>
+                          Congestion Level | 混雑度
+                        </div>
+                        <div style={{ 
+                          height: '10px', 
+                          background: '#1e293b', 
+                          borderRadius: '5px',
+                          overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            width: `${port.congestion}%`,
+                            height: '100%',
+                            background: port.congestion > 70 ? 'linear-gradient(90deg, #ef4444, #dc2626)' : 
+                                        port.congestion > 50 ? 'linear-gradient(90deg, #f59e0b, #d97706)' : 
+                                        'linear-gradient(90deg, #22c55e, #16a34a)',
+                            transition: 'width 0.5s'
+                          }} />
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '6px' }}>
+                          {port.congestion}%
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div style={{ background: 'rgba(0,180,216,0.1)', padding: '12px', borderRadius: '8px' }}>
+                          <div style={{ fontSize: '10px', color: '#94a3b8' }}>Avg Wait Time | 平均待機</div>
+                          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#00b4d8' }}>{port.waitTime}h</div>
+                        </div>
+                        <div style={{ background: 'rgba(247,127,0,0.1)', padding: '12px', borderRadius: '8px' }}>
+                          <div style={{ fontSize: '10px', color: '#94a3b8' }}>AI Optimized | AI最適化</div>
+                          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f77f00' }}>
+                            {(port.waitTime * 0.7).toFixed(1)}h
+                          </div>
+                          <div style={{ fontSize: '9px', color: '#22c55e' }}>-30% savings</div>
+                        </div>
+                        <div style={{ background: 'rgba(34,197,94,0.1)', padding: '12px', borderRadius: '8px' }}>
+                          <div style={{ fontSize: '10px', color: '#94a3b8' }}>Berths | バース数</div>
+                          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#22c55e' }}>{port.berths}</div>
+                        </div>
+                        <div style={{ background: 'rgba(59,130,246,0.1)', padding: '12px', borderRadius: '8px' }}>
+                          <div style={{ fontSize: '10px', color: '#94a3b8' }}>Vessels | 船舶数</div>
+                          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#3b82f6' }}>{port.vessels}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'cargo' && (
+                <div style={{ 
+                  background: 'rgba(30,41,59,0.8)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  height: '100%',
+                  overflow: 'auto'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ margin: 0, color: '#00b4d8' }}>📦 Container Tracking | コンテナ追跡</h3>
+                    <input
+                      type="text"
+                      placeholder="Search container, vessel, destination..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        background: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: '6px',
+                        padding: '8px 12px',
+                        color: '#e2e8f0',
+                        fontSize: '12px',
+                        width: '280px'
+                      }}
+                    />
+                  </div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #334155' }}>
+                          <th style={{ padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '11px' }}>Container ID</th>
+                          <th style={{ padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '11px' }}>Type</th>
+                          <th style={{ padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '11px' }}>Temperature</th>
+                          <th style={{ padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '11px' }}>Status</th>
+                          <th style={{ padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '11px' }}>Vessel</th>
+                          <th style={{ padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '11px' }}>Route</th>
+                          <th style={{ padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '11px' }}>Position</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredContainers.map(container => (
+                          <tr key={container.id} style={{ borderBottom: '1px solid #334155' }}>
+                            <td style={{ padding: '12px', fontSize: '13px', fontWeight: 'bold', color: '#00b4d8' }}>{container.id}</td>
+                            <td style={{ padding: '12px', fontSize: '12px' }}>
+                              <span style={{
+                                background: container.type === 'Reefer' ? '#3b82f6' : '#6b7280',
+                                padding: '3px 10px',
+                                borderRadius: '4px',
+                                fontSize: '10px'
+                              }}>
+                                {container.type === 'Reefer' ? '❄️ Reefer' : '📦 Dry'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px', fontSize: '12px' }}>
+                              {container.temp !== null ? (
+                                <span style={{ 
+                                  color: container.temp < -19 ? '#22c55e' : '#f59e0b',
+                                  fontWeight: 'bold'
+                                }}>
+                                  {container.temp}°C
+                                  {container.temp >= -19 && <span style={{ marginLeft: '4px' }}>⚠️</span>}
+                                </span>
+                              ) : '-'}
+                            </td>
+                            <td style={{ padding: '12px', fontSize: '12px' }}>
+                              <span style={{
+                                background: container.status === 'In Transit' ? '#22c55e' : container.status === 'Loading' ? '#f59e0b' : '#3b82f6',
+                                padding: '3px 10px',
+                                borderRadius: '4px',
+                                fontSize: '10px'
+                              }}>
+                                {container.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px', fontSize: '12px' }}>{container.vessel}</td>
+                            <td style={{ padding: '12px', fontSize: '12px' }}>{container.origin} → {container.destination}</td>
+                            <td style={{ padding: '12px', fontSize: '11px', color: '#94a3b8' }}>{container.position}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'analytics' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
+                  {/* KPI Cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #003366 0%, #1a5490 100%)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '8px' }}>Fuel Savings Today | 本日燃料節約</div>
+                      <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#22c55e' }}>$47.2K</div>
+                      <div style={{ fontSize: '11px', color: '#22c55e' }}>↑ 18% vs yesterday</div>
+                    </div>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #00b4d8 0%, #0891b2 100%)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>ETA Accuracy | ETA精度</div>
+                      <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#fff' }}>96.8%</div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>Target: 95% ✓</div>
+                    </div>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #f77f00 0%, #ea580c 100%)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>CO2 Reduced | CO2削減</div>
+                      <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#fff' }}>128 tons</div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>This week | 今週</div>
+                    </div>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>Wait Time Saved | 待機時間削減</div>
+                      <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#fff' }}>42h</div>
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>This month | 今月</div>
+                    </div>
+                  </div>
+                  
+                  {/* Charts */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flex: 1 }}>
+                    <div style={{
+                      background: 'rgba(30,41,59,0.8)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                    }}>
+                      <h3 style={{ margin: '0 0 16px 0', color: '#00b4d8', fontSize: '14px' }}>
+                        📊 Monthly ETA Accuracy | 月別ETA精度
+                      </h3>
+                      <div style={{ display: 'flex', height: '180px', alignItems: 'flex-end', gap: '6px', paddingTop: '20px' }}>
+                        {[92, 94, 93, 95, 96, 94, 97, 96, 97, 98, 96, 97].map((val, i) => (
+                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px' }}>{val}%</div>
+                            <div style={{
+                              width: '100%',
+                              height: `${val * 1.8}px`,
+                              background: `linear-gradient(180deg, #00b4d8 0%, #003366 100%)`,
+                              borderRadius: '4px 4px 0 0',
+                              transition: 'height 0.5s'
+                            }} />
+                            <div style={{ fontSize: '8px', color: '#94a3b8', marginTop: '4px' }}>
+                              {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      background: 'rgba(30,41,59,0.8)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                    }}>
+                      <h3 style={{ margin: '0 0 16px 0', color: '#f77f00', fontSize: '14px' }}>
+                        💰 Monthly Savings ($K) | 月別節約額
+                      </h3>
+                      <div style={{ display: 'flex', height: '180px', alignItems: 'flex-end', gap: '6px', paddingTop: '20px' }}>
+                        {[35, 42, 38, 45, 52, 48, 55, 62, 58, 68, 72, 78].map((val, i) => (
+                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px' }}>${val}K</div>
+                            <div style={{
+                              width: '100%',
+                              height: `${val * 2.2}px`,
+                              background: `linear-gradient(180deg, #f77f00 0%, #ea580c 100%)`,
+                              borderRadius: '4px 4px 0 0',
+                              transition: 'height 0.5s'
+                            }} />
+                            <div style={{ fontSize: '8px', color: '#94a3b8', marginTop: '4px' }}>
+                              {['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Panel - AI Insights */}
+            {showAIPanel && (
+              <div style={{ 
+                width: '340px', 
+                background: 'rgba(15,23,42,0.95)',
+                borderLeft: '1px solid #334155',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                overflow: 'auto'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px',
+                  paddingBottom: '12px',
+                  borderBottom: '1px solid #334155'
+                }}>
+                  <span style={{ fontSize: '20px' }}>🤖</span>
+                  <span style={{ fontWeight: 'bold', color: '#f77f00' }}>AI Insights</span>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>| AI分析</span>
+                  <div style={{ flex: 1 }} />
+                  <span style={{ fontSize: '10px', color: '#22c55e', background: 'rgba(34,197,94,0.2)', padding: '2px 8px', borderRadius: '10px' }}>
+                    5 Active
+                  </span>
+                </div>
+
+                {aiPredictions.map((pred, i) => {
+                  const colors = getSeverityColor(pred.severity);
+                  return (
+                    <div key={i} style={{
+                      background: colors.bg,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      padding: '12px',
+                      borderLeft: `4px solid ${colors.border}`
+                    }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '8px'
+                      }}>
+                        <span style={{ 
+                          fontSize: '11px', 
+                          fontWeight: 'bold',
+                          color: colors.text
+                        }}>
+                          {pred.type}
+                        </span>
+                        <span style={{
+                          fontSize: '9px',
+                          background: colors.border,
+                          color: '#fff',
+                          padding: '2px 8px',
+                          borderRadius: '10px'
+                        }}>
+                          {pred.vessel || pred.port || pred.route}
+                        </span>
+                      </div>
+                      <p style={{ 
+                        margin: '0 0 8px 0', 
+                        fontSize: '11px', 
+                        color: '#1e293b',
+                        lineHeight: '1.4'
+                      }}>
+                        {pred.message}
+                      </p>
+                      <div style={{
+                        fontSize: '10px',
+                        color: '#16a34a',
+                        fontWeight: 'bold',
+                        background: 'rgba(34,197,94,0.1)',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        display: 'inline-block'
+                      }}>
+                        💡 {pred.saving}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Selected Vessel Detail */}
+                {selectedVessel && (
+                  <div style={{
+                    background: 'rgba(0,51,102,0.5)',
+                    border: '1px solid #00b4d8',
+                    borderRadius: '8px',
+                    padding: '14px',
+                    marginTop: 'auto'
+                  }}>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Selected Vessel | 選択中の船舶</div>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#00b4d8', marginBottom: '12px' }}>
+                      🚢 {selectedVessel.id}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '11px' }}>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: '9px' }}>IMO</div>
+                        <div>{selectedVessel.imo}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: '9px' }}>Status</div>
+                        <div style={{ color: getStatusColor(selectedVessel.status) }}>{selectedVessel.status}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: '9px' }}>Speed</div>
+                        <div>{selectedVessel.speed.toFixed(1)} kts</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: '9px' }}>Heading</div>
+                        <div>{selectedVessel.heading}°</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: '9px' }}>Destination</div>
+                        <div>{selectedVessel.destination}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: '9px' }}>ETA</div>
+                        <div style={{ color: '#22c55e' }}>{selectedVessel.eta}</div>
+                      </div>
+                      <div style={{ gridColumn: 'span 2' }}>
+                        <div style={{ color: '#94a3b8', marginBottom: '4px', fontSize: '9px' }}>Fuel Level</div>
+                        <div style={{ 
+                          height: '8px', 
+                          background: '#1e293b', 
+                          borderRadius: '4px',
+                          overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            width: `${selectedVessel.fuel}%`,
+                            height: '100%',
+                            background: selectedVessel.fuel > 50 ? '#22c55e' : selectedVessel.fuel > 25 ? '#f59e0b' : '#ef4444'
+                          }} />
+                        </div>
+                        <div style={{ fontSize: '10px', marginTop: '4px' }}>{selectedVessel.fuel.toFixed(0)}%</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div style={{
+            background: 'rgba(0,51,102,0.95)',
+            padding: '8px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '11px',
+            color: '#94a3b8',
+            borderTop: '1px solid #334155'
+          }}>
+            <div>© 2024 CyberLogitec. OPUS DigiPort - Digital Twin Platform</div>
+            <div>Demo Version for ONE | ONEデモ版</div>
+          </div>
+        </div>
+      );
+    }
+
+    // Render the app
+    ReactDOM.render(<DigitalTwinDemo />, document.getElementById('root'));
+  </script>
+</body>
+</html>
