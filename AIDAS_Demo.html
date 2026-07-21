@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AIDAS Executive Impact Demo</title>
+<style>
+:root{
+  --navy:#081b33; --navy2:#0d2d53; --blue:#1e64d6; --cyan:#26b8d4; --teal:#18a87a;
+  --gold:#f2ad3d; --orange:#ed6b3c; --red:#d8485f; --green:#1caa76; --ink:#132239;
+  --muted:#63748c; --bg:#eef3f8; --card:#ffffff; --line:#d8e3ef; --soft:#f7f9fc;
+  --shadow:0 18px 50px rgba(7,27,51,.12); --radius:20px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Noto Sans KR","Malgun Gothic",Arial,sans-serif;color:var(--ink);background:var(--bg)}
+button{font:inherit}.hidden{display:none!important}
+.app{min-height:100vh;display:grid;grid-template-rows:72px 1fr;background:
+  radial-gradient(circle at 90% 8%,rgba(38,184,212,.13),transparent 23%),
+  radial-gradient(circle at 16% 92%,rgba(30,100,214,.10),transparent 25%),var(--bg)}
+.topbar{height:72px;background:linear-gradient(90deg,var(--navy),var(--navy2));color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px;box-shadow:0 4px 18px rgba(7,27,51,.22);z-index:10}
+.brand{display:flex;align-items:center;gap:14px}.brandmark{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--blue));font-weight:900;font-size:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.brand strong{font-size:20px;letter-spacing:.3px}.brand small{display:block;color:#bcd1e8;margin-top:2px;font-size:11px}
+.top-actions{display:flex;gap:10px;align-items:center}.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.22);padding:8px 12px;border-radius:999px;color:#dbeafd;font-size:12px}.status-dot{width:8px;height:8px;border-radius:50%;background:#4de2a8;box-shadow:0 0 0 5px rgba(77,226,168,.12)}
+.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn:hover{transform:translateY(-1px);filter:brightness(1.03)}.btn.primary{background:linear-gradient(135deg,var(--blue),#3b82f6);color:white;box-shadow:0 8px 18px rgba(30,100,214,.25)}.btn.gold{background:linear-gradient(135deg,var(--gold),#ffbf54);color:#3b2a0a}.btn.ghost{background:#fff;color:var(--navy2);border:1px solid var(--line)}.btn.dark{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff}.btn.sm{padding:8px 11px;border-radius:10px;font-size:12px}
+.shell{display:grid;grid-template-columns:255px 1fr;min-height:calc(100vh - 72px)}
+.sidebar{background:rgba(255,255,255,.89);backdrop-filter:blur(18px);border-right:1px solid var(--line);padding:20px 16px;display:flex;flex-direction:column;position:relative;z-index:4}
+.side-title{font-size:11px;color:#7a8ba2;letter-spacing:1.4px;font-weight:800;padding:4px 12px 10px}.scene-nav{display:flex;flex-direction:column;gap:7px}.scene-btn{border:0;background:transparent;text-align:left;border-radius:14px;padding:12px 12px;display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;color:#4b5d75;cursor:pointer;transition:.2s}.scene-btn:hover{background:#f1f6fb}.scene-btn.active{background:linear-gradient(90deg,#e9f2ff,#f4fbff);color:var(--navy2);box-shadow:inset 3px 0 0 var(--blue)}.num{width:30px;height:30px;border-radius:10px;background:#e8eef5;display:grid;place-items:center;font-size:12px;font-weight:900}.scene-btn.active .num{background:var(--blue);color:#fff}.scene-btn b{font-size:13px;display:block}.scene-btn span{font-size:10px;color:#8a99ad;display:block;margin-top:3px}
+.sidebar-foot{margin-top:auto;border-radius:16px;padding:14px;background:linear-gradient(145deg,var(--navy2),var(--navy));color:#fff}.sidebar-foot b{font-size:12px}.sidebar-foot p{font-size:10px;line-height:1.55;color:#bcd1e8;margin:6px 0 12px}.sidebar-progress{height:6px;background:rgba(255,255,255,.17);border-radius:999px;overflow:hidden}.sidebar-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),#65e0ff);transition:width .5s}
+.main{padding:24px 28px 40px;overflow-x:hidden}.scene{display:none;animation:fade .36s ease}.scene.active{display:block}@keyframes fade{from{opacity:.1;transform:translateY(8px)}to{opacity:1;transform:none}}
+.scene-head{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 0 18px}.eyebrow{font-size:11px;color:var(--blue);font-weight:900;letter-spacing:1.3px;text-transform:uppercase}.scene-head h1{margin:5px 0 0;font-size:30px;color:var(--navy);letter-spacing:-.7px}.scene-head p{margin:7px 0 0;color:var(--muted);font-size:13px}.head-actions{display:flex;gap:8px;align-items:center}
+.card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}.pad{padding:20px}.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g5{grid-template-columns:repeat(5,minmax(0,1fr))}.span2{grid-column:span 2}.span3{grid-column:span 3}
+.hero{min-height:610px;display:grid;grid-template-columns:1.05fr .95fr;overflow:hidden;position:relative;background:
+ linear-gradient(120deg,rgba(255,255,255,.98),rgba(244,250,255,.95));}.hero:after{content:"";position:absolute;width:440px;height:440px;border-radius:50%;right:-150px;top:-150px;background:radial-gradient(circle,rgba(38,184,212,.19),rgba(38,184,212,0));pointer-events:none}.hero-copy{padding:52px 46px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}.hero-kicker{display:inline-flex;align-items:center;gap:8px;background:#e9f3ff;color:var(--blue);font-size:12px;font-weight:900;padding:8px 12px;border-radius:999px;width:max-content}.hero h2{font-size:44px;line-height:1.17;letter-spacing:-1.5px;color:var(--navy);margin:20px 0 18px}.hero h2 em{font-style:normal;color:var(--blue)}.hero-copy>p{font-size:17px;color:#53657d;line-height:1.7;margin:0 0 26px;max-width:690px}.hero-actions{display:flex;gap:10px;flex-wrap:wrap}.hero-micro{display:flex;gap:18px;margin-top:30px}.micro{display:flex;gap:9px;align-items:center}.micro i{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#edf5ff;color:var(--blue);font-style:normal;font-weight:900}.micro b{display:block;font-size:12px}.micro span{font-size:10px;color:#8493a7}
+.hero-visual{background:linear-gradient(150deg,var(--navy2),var(--navy));padding:34px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.hero-visual:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,black,transparent)}
+.transformation{width:100%;position:relative;z-index:2}.input-row,.output-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.io-card{border-radius:17px;padding:16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.075);color:white;min-height:104px}.io-card .ico{font-size:25px}.io-card b{display:block;margin-top:8px;font-size:13px}.io-card span{font-size:10px;color:#abc3dc;line-height:1.45}.brain{height:128px;display:flex;align-items:center;justify-content:center;position:relative}.brain-core{width:104px;height:104px;border-radius:28px;display:grid;place-items:center;color:white;font-size:34px;background:linear-gradient(145deg,var(--cyan),var(--blue));box-shadow:0 0 0 10px rgba(38,184,212,.08),0 0 45px rgba(38,184,212,.38);animation:pulse 2.1s infinite}.brain:before,.brain:after{content:"";height:2px;position:absolute;left:5%;right:5%;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:flow 1.8s infinite}@keyframes pulse{50%{transform:scale(1.05);box-shadow:0 0 0 16px rgba(38,184,212,.04),0 0 58px rgba(38,184,212,.45)}}@keyframes flow{from{transform:scaleX(.2);opacity:.2}50%{transform:scaleX(1);opacity:1}to{transform:scaleX(.2);opacity:.2}}
+.output-card{background:#fff;color:var(--ink);border:0;box-shadow:0 12px 28px rgba(0,0,0,.18)}.output-card span{color:#64758b}.output-card .ico{color:var(--blue)}
+.kpi{padding:18px;min-height:130px;position:relative;overflow:hidden}.kpi:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-30px;bottom:-35px;background:rgba(30,100,214,.07)}.kpi .label{font-size:11px;color:#75869c;font-weight:700}.kpi .value{font-size:30px;letter-spacing:-1px;color:var(--navy);font-weight:900;margin:10px 0 4px}.kpi .foot{font-size:10px;color:#8a99ad}.kpi .value.green{color:var(--green)}.kpi .value.orange{color:var(--orange)}
+.flow-card{padding:20px}.flow-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:17px}.flow-title h3{margin:0;font-size:16px;color:var(--navy)}.flow-line{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch}.flow-step{position:relative;border:1px solid var(--line);background:var(--soft);border-radius:16px;padding:16px 13px;min-height:120px}.flow-step:after{content:"›";position:absolute;right:-11px;top:42px;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:900;z-index:2}.flow-step:last-child:after{display:none}.flow-step .step-no{font-size:10px;color:var(--blue);font-weight:900}.flow-step b{display:block;font-size:13px;margin:9px 0 5px;color:var(--navy2)}.flow-step p{font-size:10px;line-height:1.5;color:#718198;margin:0}.flow-step.running{border-color:#7ac4ff;background:#edf7ff;box-shadow:0 0 0 3px rgba(30,100,214,.08)}.flow-step.done{border-color:#9bd7bf;background:#effbf6}.flow-step.done .step-no{color:var(--green)}
+.upload-zone{padding:20px}.file-box{border:1px dashed #9db6cf;border-radius:17px;background:#f8fbff;padding:18px;display:flex;align-items:center;gap:14px}.file-icon{width:52px;height:58px;border-radius:12px;background:linear-gradient(145deg,#ff6b5d,#db344a);color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:0 8px 16px rgba(216,72,95,.24)}.file-info b{font-size:13px;color:var(--navy)}.file-info span{display:block;font-size:10px;color:#78889c;margin-top:5px}.meta-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-size:9px;font-weight:800;background:#edf3f9;color:#57708a}.tag.blue{background:#e7f1ff;color:var(--blue)}.tag.green{background:#e8f8f1;color:#13835d}.tag.gold{background:#fff5dd;color:#9b6807}.tag.red{background:#ffe9ed;color:#ad2c45}.tag.gray{background:#eef1f5;color:#5d6b7b}
+.progress-box{margin-top:18px}.progress-head{display:flex;justify-content:space-between;font-size:10px;color:#66778c;margin-bottom:7px}.progress{height:9px;background:#e7edf4;border-radius:999px;overflow:hidden}.progress i{height:100%;display:block;width:0;background:linear-gradient(90deg,var(--cyan),var(--blue));border-radius:999px;transition:width .8s}.scan-log{margin-top:14px;background:#0b1e34;color:#bfe2ff;border-radius:14px;padding:12px 14px;min-height:100px;font-family:Consolas,monospace;font-size:10px;line-height:1.65;overflow:hidden}.scan-log .ok{color:#62e3aa}.scan-log .warn{color:#ffd278}
+.table-card{padding:0;overflow:hidden}.table-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.table-head h3{margin:0;font-size:15px;color:var(--navy)}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#f3f7fb;text-align:left;color:#66778c;font-size:9px;letter-spacing:.2px;padding:10px}td{padding:10px;border-top:1px solid #e7edf3;vertical-align:top}tr.clickable{cursor:pointer}tr.clickable:hover{background:#f8fbff}tr.selected{background:#eef6ff}.req{font-weight:800;color:var(--navy2)}.match{padding:4px 7px;border-radius:999px;font-weight:900;font-size:8px}.full{background:#e6f8f1;color:#11805b}.partial{background:#fff3d9;color:#986306}.none{background:#ffe8ec;color:#a72c42}.unclear{background:#edf0f4;color:#596779}
+.evidence-card{padding:18px}.evidence-card h3{margin:0 0 14px;font-size:15px;color:var(--navy)}.trace{display:grid;grid-template-columns:1fr 34px 1fr 34px 1fr;align-items:center;gap:6px}.trace-node{border:1px solid var(--line);background:var(--soft);border-radius:15px;padding:13px;min-height:118px}.trace-node .ticon{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:#e8f2ff;color:var(--blue);font-weight:900}.trace-node b{display:block;font-size:11px;margin:9px 0 4px;color:var(--navy2)}.trace-node p{font-size:9px;color:#6d7e94;line-height:1.45;margin:0}.trace-arrow{text-align:center;color:var(--blue);font-size:24px;font-weight:900}.confidence{margin-top:14px;display:grid;grid-template-columns:120px 1fr 45px;align-items:center;gap:10px;font-size:10px;color:#66778c}.conf-bar{height:8px;background:#e8eef4;border-radius:999px;overflow:hidden}.conf-bar i{display:block;height:100%;width:94%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:999px}
+.output-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.doc{border:1px solid var(--line);border-radius:16px;padding:15px;display:flex;gap:11px;align-items:center;background:#fff;transition:.2s}.doc:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(7,27,51,.08)}.doc-ico{width:42px;height:48px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:10px}.doc .word{background:#2b66cf}.doc .ppt{background:#d75f33}.doc .xls{background:#19895d}.doc .pdf{background:#d63c50}.doc .json{background:#6f62bd}.doc .md{background:#37485d}.doc b{font-size:10px;color:var(--navy2);display:block}.doc span{display:block;font-size:8px;color:#7d8ca0;margin-top:4px}.doc small{display:inline-block;margin-top:6px;color:var(--green);font-weight:800;font-size:8px}
+.code-layout{display:grid;grid-template-columns:.95fr 1.05fr;gap:16px}.ide{overflow:hidden}.ide-top{height:38px;background:#1a2a3e;color:#cdd9e6;display:flex;align-items:center;padding:0 12px;gap:8px;font-size:9px}.traffic{display:flex;gap:5px}.traffic i{width:8px;height:8px;border-radius:50%;display:block}.traffic i:nth-child(1){background:#ff5c57}.traffic i:nth-child(2){background:#ffbd2e}.traffic i:nth-child(3){background:#28c840}.ide-body{display:grid;grid-template-columns:170px 1fr;min-height:430px;background:#0f1b2b;color:#d7e3ef}.tree{border-right:1px solid #24364c;padding:14px;font-size:9px;line-height:1.8;color:#8fa4ba}.tree b{color:#e3edf7}.editor{padding:16px;font-family:Consolas,monospace;font-size:10px;line-height:1.6;white-space:pre;overflow:auto}.ln{color:#50657c;display:inline-block;width:26px}.add{display:block;background:rgba(28,170,118,.12);border-left:3px solid #27c98d;margin-left:-9px;padding-left:6px}.del{display:block;background:rgba(216,72,95,.12);border-left:3px solid #e75d72;margin-left:-9px;padding-left:6px}.kw{color:#6bb9ff}.fn{color:#f0d27c}.str{color:#7fe0b7}.ann{color:#e69aff}.comment{color:#6e839a}.save-banner{display:none;margin:10px 14px 0;border:1px solid rgba(38,184,212,.35);background:rgba(38,184,212,.10);padding:9px 11px;border-radius:10px;color:#8bdff0;font-size:9px}.save-banner.show{display:block;animation:flash .6s}@keyframes flash{50%{background:rgba(38,184,212,.25)}}
+.pipeline{padding:18px}.pipeline h3{margin:0 0 14px;font-size:15px;color:var(--navy)}.pipe-step{display:grid;grid-template-columns:40px 1fr 74px;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:9px;background:#fff}.pipe-icon{width:34px;height:34px;border-radius:10px;background:#edf4fc;color:var(--blue);display:grid;place-items:center;font-size:14px}.pipe-step b{font-size:10px;display:block;color:var(--navy2)}.pipe-step span{font-size:8px;color:#8291a4}.pipe-state{text-align:right;font-size:8px;font-weight:900;color:#8997a8}.pipe-step.active{border-color:#78bfff;background:#f0f8ff}.pipe-step.done{border-color:#96d8bd;background:#f0fbf6}.pipe-step.done .pipe-state{color:var(--green)}
+.diff-impact{padding:18px}.impact-list{display:grid;gap:9px}.impact{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;border-bottom:1px solid #e7edf3;padding:8px 0}.impact:last-child{border:0}.impact i{width:30px;height:30px;border-radius:9px;background:#eef4fb;display:grid;place-items:center;font-style:normal}.impact b{font-size:10px;display:block}.impact span{font-size:8px;color:#7b8b9f}.impact em{font-style:normal;font-size:8px;color:var(--green);font-weight:900}
+.compare{display:grid;grid-template-columns:1fr 72px 1fr;gap:16px;align-items:stretch}.before,.after{padding:24px}.before{background:linear-gradient(145deg,#fff,#fbf5f6)}.after{background:linear-gradient(145deg,#fff,#f3fbf8)}.compare h3{font-size:17px;margin:0 0 18px;color:var(--navy)}.compare-row{border-top:1px solid var(--line);padding:13px 0}.compare-row:first-of-type{border-top:0}.compare-row b{font-size:11px;display:block}.compare-row span{font-size:9px;color:#7b8b9e;display:block;margin-top:4px}.compare-arrow{display:grid;place-items:center;color:var(--blue);font-size:36px;font-weight:900}.value-card{padding:20px}.value-card .vicon{width:44px;height:44px;border-radius:14px;background:#e9f3ff;color:var(--blue);display:grid;place-items:center;font-size:20px}.value-card h3{font-size:14px;margin:13px 0 7px;color:var(--navy2)}.value-card p{font-size:10px;color:#6e7f94;line-height:1.55;margin:0}.target{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px}.target b{font-size:22px;color:var(--blue)}.target span{font-size:8px;color:#8997aa;text-align:right}
+.scoreboard{padding:24px;background:linear-gradient(145deg,var(--navy2),var(--navy));color:#fff}.scoreboard h3{margin:0 0 17px;font-size:16px}.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.score{padding:15px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);border-radius:15px}.score span{font-size:9px;color:#b5cbe0}.score b{font-size:24px;display:block;margin:8px 0 4px}.score small{font-size:8px;color:#89a8c6}
+.final-hero{display:grid;grid-template-columns:1.1fr .9fr;overflow:hidden}.final-copy{padding:34px}.final-copy h2{font-size:31px;line-height:1.25;margin:0 0 14px;color:var(--navy);letter-spacing:-.7px}.final-copy p{font-size:13px;color:#63758b;line-height:1.7}.decision-list{margin:20px 0;display:grid;gap:10px}.decision{display:flex;gap:10px;align-items:flex-start}.check{width:25px;height:25px;border-radius:8px;background:#e8f8f1;color:var(--green);display:grid;place-items:center;font-weight:900;flex:none}.decision b{display:block;font-size:11px}.decision span{font-size:9px;color:#78899d}.final-side{padding:28px;background:linear-gradient(145deg,var(--navy2),var(--navy));color:#fff}.milestone{border-left:2px solid rgba(255,255,255,.18);padding-left:18px;margin-left:8px}.mile{position:relative;padding:0 0 20px 10px}.mile:before{content:"";position:absolute;width:10px;height:10px;border-radius:50%;left:-24px;top:3px;background:var(--cyan);box-shadow:0 0 0 5px rgba(38,184,212,.12)}.mile b{font-size:11px}.mile span{display:block;font-size:9px;color:#a9c0d7;margin-top:4px;line-height:1.5}.owner{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.14);font-size:9px;color:#a9c0d7}.owner strong{color:#fff}
+.presenter{position:fixed;left:280px;right:28px;bottom:18px;z-index:20;background:rgba(8,27,51,.95);backdrop-filter:blur(12px);color:#fff;border-radius:16px;padding:13px 16px;box-shadow:0 15px 40px rgba(0,0,0,.25);display:none;align-items:center;gap:14px}.presenter.show{display:flex}.presenter .mic{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,var(--cyan),var(--blue));display:grid;place-items:center;flex:none}.presenter p{margin:0;font-size:11px;line-height:1.55;color:#d7e6f5;flex:1}.presenter b{color:#fff}.toast{position:fixed;right:25px;top:90px;background:var(--navy);color:#fff;border-radius:14px;padding:13px 16px;box-shadow:0 12px 30px rgba(7,27,51,.28);font-size:11px;display:none;z-index:30}.toast.show{display:block;animation:fade .25s}
+.demo-ribbon{position:absolute;right:18px;top:18px;background:#fff4d6;color:#8c620a;border:1px solid #f1d798;border-radius:999px;padding:6px 10px;font-size:9px;font-weight:900;z-index:2}
+@media(max-width:1150px){.shell{grid-template-columns:220px 1fr}.hero{grid-template-columns:1fr}.hero-visual{min-height:440px}.g4,.g5{grid-template-columns:repeat(2,1fr)}.flow-line{grid-template-columns:1fr}.flow-step:after{display:none}.trace{grid-template-columns:1fr}.trace-arrow{transform:rotate(90deg)}.code-layout,.g2,.final-hero{grid-template-columns:1fr}.span2,.span3{grid-column:auto}.presenter{left:245px}.output-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.topbar{padding:0 14px}.top-actions .pill{display:none}.shell{grid-template-columns:1fr}.sidebar{position:static;border-right:0;border-bottom:1px solid var(--line)}.scene-nav{display:grid;grid-template-columns:repeat(3,1fr)}.scene-btn{grid-template-columns:1fr;text-align:center;padding:8px}.scene-btn span{display:none}.num{margin:auto}.sidebar-foot{display:none}.main{padding:16px}.hero-copy{padding:30px 24px}.hero h2{font-size:33px}.hero-micro{flex-direction:column}.g3,.g4,.g5,.output-grid,.score-grid{grid-template-columns:1fr}.compare{grid-template-columns:1fr}.compare-arrow{transform:rotate(90deg)}.presenter{left:14px;right:14px}.ide-body{grid-template-columns:1fr}.tree{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><div class="brandmark">AI</div><div><strong>AIDAS</strong><small>AI-Driven Artifact &amp; Proposal Automation System</small></div></div>
+    <div class="top-actions">
+      <div class="pill"><span class="status-dot"></span>폐쇄망 시연 환경 · Synthetic Demo Data</div>
+      <button class="btn dark sm" id="noteBtn">발표자 노트</button>
+      <button class="btn gold sm" id="autoBtn">▶ 자동 시연</button>
+    </div>
+  </header>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="side-title">EXECUTIVE DEMO</div>
+      <nav class="scene-nav">
+        <button class="scene-btn active" data-scene="0"><span class="num">01</span><span><b>최종 모습</b><span>입력에서 완성품까지</span></span></button>
+        <button class="scene-btn" data-scene="1"><span class="num">02</span><span><b>제안 자동화</b><span>RFP → 제안 패키지</span></span></button>
+        <button class="scene-btn" data-scene="2"><span class="num">03</span><span><b>근거·갭 검증</b><span>3-Way Traceability</span></span></button>
+        <button class="scene-btn" data-scene="3"><span class="num">04</span><span><b>산출물 자동화</b><span>코드 저장 → 문서</span></span></button>
+        <button class="scene-btn" data-scene="4"><span class="num">05</span><span><b>경영 효용</b><span>속도·품질·보안</span></span></button>
+        <button class="scene-btn" data-scene="5"><span class="num">06</span><span><b>11월 완성상</b><span>의사결정 포인트</span></span></button>
+      </nav>
+      <div class="sidebar-foot">
+        <b>시연 진행률</b><p>각 화면은 실제 최종 제품의 사용자 경험을 기준으로 구성한 클릭형 시뮬레이션입니다.</p>
+        <div class="sidebar-progress"><i id="sideProgress"></i></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- Scene 0 -->
+      <section class="scene active" data-index="0">
+        <div class="scene-head"><div><div class="eyebrow">The Final Product Vision</div><h1>기능이 아니라, 완성되는 결과물을 보여줍니다</h1><p>RFP 한 건과 코드 한 줄이 검증 가능한 제안·개발 산출물 패키지로 바뀌는 최종 모습을 시연합니다.</p></div></div>
+        <div class="card hero">
+          <div class="demo-ribbon">EXECUTIVE IMPACT DEMO</div>
+          <div class="hero-copy">
+            <span class="hero-kicker">AIDAS FINAL OUTCOME</span>
+            <h2><em>RFP와 소스코드</em>를<br/>회사 지식과 연결해<br/>완성품으로 전환</h2>
+            <p>고객 요구를 수주 전략과 제안서로, 개발자의 코드 변경을 설계·API·테스트·릴리스 문서로 자동 전환합니다. 모든 근거는 추적 가능하며, 처리 과정은 폐쇄망 내부에서 완료됩니다.</p>
+            <div class="hero-actions"><button class="btn primary" onclick="goScene(1);setTimeout(runRfpDemo,450)">RFP → 제안서 시연</button><button class="btn ghost" onclick="goScene(3);setTimeout(runCodeDemo,450)">코드 → 산출물 시연</button></div>
+            <div class="hero-micro">
+              <div class="micro"><i>10</i><div><b>10분 이내</b><span>제안서 초안 목표</span></div></div>
+              <div class="micro"><i>↔</i><div><b>3-Way 근거</b><span>요구·기능·소스 연결</span></div></div>
+              <div class="micro"><i>🔒</i><div><b>Air-Gapped</b><span>외부 정보 유출 Zero</span></div></div>
+            </div>
+          </div>
+          <div class="hero-visual">
+            <div class="transformation">
+              <div class="input-row">
+                <div class="io-card"><div class="ico">📄</div><b>Customer RFP</b><span>요구사항·평가배점·제출형식</span></div>
+                <div class="io-card"><div class="ico">&lt;/&gt;</div><b>Source Code</b><span>AST·Diff·Dependency·Git Event</span></div>
+              </div>
+              <div class="brain"><div class="brain-core">A</div></div>
+              <div class="output-row">
+                <div class="io-card output-card"><div class="ico">🏆</div><b>Winning Proposal Package</b><span>제안서·PPT·대응표·Risk·Q&amp;A</span></div>
+                <div class="io-card output-card"><div class="ico">⚙</div><b>Development Artifact Pack</b><span>설계·API·Test·Impact·Release</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scene 1 -->
+      <section class="scene" data-index="1">
+        <div class="scene-head"><div><div class="eyebrow">Use Case 01 · Proposal Autopilot</div><h1>고객 RFP가 10분 이내 제안 패키지 초안으로</h1><p>수백 페이지의 요구사항을 해체하고 내부 역량을 매핑한 뒤, 검토 가능한 제안 산출물을 일괄 생성합니다.</p></div><div class="head-actions"><button class="btn primary" onclick="runRfpDemo()">▶ 전체 과정 실행</button><button class="btn ghost" onclick="resetRfpDemo()">초기화</button></div></div>
+        <div class="grid g4">
+          <div class="card kpi"><div class="label">RFP 분량</div><div class="value">286p</div><div class="foot">PDF/HWP/DOCX/PPTX 지원</div></div>
+          <div class="card kpi"><div class="label">추출 요구사항</div><div class="value" id="kpiReq">0</div><div class="foot">기능·기술·보안·운영 분류</div></div>
+          <div class="card kpi"><div class="label">근거 연결</div><div class="value green" id="kpiEvidence">0%</div><div class="foot">요구 ↔ 기능 ↔ 소스/사례</div></div>
+          <div class="card kpi"><div class="label">초안 생성 시간</div><div class="value orange" id="kpiTime">--:--</div><div class="foot">설계 목표 · 데모 시뮬레이션</div></div>
+        </div>
+        <div class="grid g2" style="margin-top:16px">
+          <div class="card upload-zone">
+            <div class="file-box"><div class="file-icon">PDF</div><div class="file-info"><b>Global_Smart_Terminal_AI_RFP.pdf</b><span>286 pages · 48.2 MB · Demo Synthetic RFP</span><div class="meta-row"><span class="tag blue">Container Terminal</span><span class="tag red">Confidential</span><span class="tag green">English/Korean</span></div></div></div>
+            <div class="progress-box"><div class="progress-head"><span id="rfpStatus">시연 대기</span><span id="rfpPct">0%</span></div><div class="progress"><i id="rfpProgress"></i></div></div>
+            <div class="scan-log" id="scanLog">[READY] RFP 문서를 등록했습니다.<br/>[READY] “전체 과정 실행”을 누르십시오.</div>
+          </div>
+          <div class="card flow-card">
+            <div class="flow-title"><h3>AIDAS 제안 생성 파이프라인</h3><span class="tag blue">Multi-Agent + RAG</span></div>
+            <div class="flow-line">
+              <div class="flow-step" id="rfpStep0"><span class="step-no">STEP 1</span><b>Ingestion</b><p>원문 구조·표·메타데이터 파싱</p></div>
+              <div class="flow-step" id="rfpStep1"><span class="step-no">STEP 2</span><b>Analysis</b><p>요구사항·배점·제출조건 추출</p></div>
+              <div class="flow-step" id="rfpStep2"><span class="step-no">STEP 3</span><b>Mapping</b><p>제품 기능·소스·사례 연결</p></div>
+              <div class="flow-step" id="rfpStep3"><span class="step-no">STEP 4</span><b>Generation</b><p>전략·목차·섹션·표 자동 작성</p></div>
+              <div class="flow-step" id="rfpStep4"><span class="step-no">STEP 5</span><b>Quality Gate</b><p>근거·누락·중복·형식 검증</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="card pad" style="margin-top:16px">
+          <div class="flow-title"><h3>최종 생성되는 제안 산출물 패키지</h3><button class="btn ghost sm" onclick="downloadProposalSample()">샘플 결과 다운로드</button></div>
+          <div class="output-grid" id="proposalOutputs">
+            <div class="doc"><div class="doc-ico word">DOCX</div><div><b>Technical Proposal</b><span>전략·기술·수행·품질 제안서</span><small>대기 중</small></div></div>
+            <div class="doc"><div class="doc-ico xls">XLSX</div><div><b>Compliance Matrix</b><span>143개 요구사항 대응표</span><small>대기 중</small></div></div>
+            <div class="doc"><div class="doc-ico ppt">PPTX</div><div><b>Executive Presentation</b><span>고객 발표용 핵심 슬라이드</span><small>대기 중</small></div></div>
+            <div class="doc"><div class="doc-ico xls">XLSX</div><div><b>Risk &amp; Assumption</b><span>Gap·질의·전제조건 목록</span><small>대기 중</small></div></div>
+            <div class="doc"><div class="doc-ico word">DOCX</div><div><b>Clarification Q&amp;A</b><span>고객 확인 질문 자동 생성</span><small>대기 중</small></div></div>
+            <div class="doc"><div class="doc-ico pdf">PDF</div><div><b>Evidence Report</b><span>문장별 근거와 신뢰도</span><small>대기 중</small></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scene 2 -->
+      <section class="scene" data-index="2">
+        <div class="scene-head"><div><div class="eyebrow">Evidence Grounding & Gap Analysis</div><h1>AI가 “잘 쓰는 것”보다 “근거 있게 쓰는 것”을 보장</h1><p>모든 제안 문장을 RFP 요구, 내부 기능 지식, 소스·설계·구축 사례와 연결해 환각과 과장을 통제합니다.</p></div><div class="head-actions"><span class="tag gold">클릭하여 근거 확인</span></div></div>
+        <div class="grid g3">
+          <div class="card kpi"><div class="label">FULL</div><div class="value green">92</div><div class="foot">기보유 기능으로 즉시 대응</div></div>
+          <div class="card kpi"><div class="label">PARTIAL</div><div class="value" style="color:#c88712">37</div><div class="foot">설정·연동·커스터마이징 필요</div></div>
+          <div class="card kpi"><div class="label">GAP / UNCLEAR</div><div class="value" style="color:var(--red)">14</div><div class="foot">신규 개발 또는 고객 질의 필요</div></div>
+        </div>
+        <div class="grid g2" style="margin-top:16px">
+          <div class="card table-card">
+            <div class="table-head"><h3>RFP Requirement Coverage</h3><span class="tag blue">143 Requirements</span></div>
+            <table><thead><tr><th>ID</th><th>요구사항</th><th>상태</th><th>평가</th></tr></thead><tbody>
+              <tr class="clickable selected" onclick="selectEvidence(0,this)"><td class="req">REQ-AI-017</td><td>AI 기반 야드 장치 최적화</td><td><span class="match full">FULL</span></td><td>10점</td></tr>
+              <tr class="clickable" onclick="selectEvidence(1,this)"><td class="req">REQ-DT-004</td><td>실시간 3D 디지털 트윈</td><td><span class="match full">FULL</span></td><td>8점</td></tr>
+              <tr class="clickable" onclick="selectEvidence(2,this)"><td class="req">REQ-INT-031</td><td>기존 FMS 양방향 연동</td><td><span class="match partial">PARTIAL</span></td><td>6점</td></tr>
+              <tr class="clickable" onclick="selectEvidence(3,this)"><td class="req">REQ-SEC-009</td><td>외부 API 없는 폐쇄망 AI</td><td><span class="match full">FULL</span></td><td>5점</td></tr>
+              <tr class="clickable" onclick="selectEvidence(4,this)"><td class="req">REQ-CV-012</td><td>열화상 기반 위험물 누출 감지</td><td><span class="match none">GAP</span></td><td>4점</td></tr>
+              <tr class="clickable" onclick="selectEvidence(5,this)"><td class="req">REQ-OPS-025</td><td>예측 정확도 98% 이상</td><td><span class="match unclear">UNCLEAR</span></td><td>3점</td></tr>
+            </tbody></table>
+          </div>
+          <div class="card evidence-card">
+            <h3>3-Way Evidence Trace</h3>
+            <div class="trace">
+              <div class="trace-node"><div class="ticon">R</div><b id="evReqTitle">RFP 요구사항</b><p id="evReq">REQ-AI-017 · AI 기반 야드 장치 위치 최적화 및 혼잡 완화</p></div>
+              <div class="trace-arrow">↔</div>
+              <div class="trace-node"><div class="ticon">F</div><b>기능 지식·사례</b><p id="evFeature">OPUS DigiPort AI · Yard Allocation Engine · 실운영 PoC 사례</p></div>
+              <div class="trace-arrow">↔</div>
+              <div class="trace-node"><div class="ticon">S</div><b>소스·산출물</b><p id="evSource">yard-allocation-service / API spec / design v2.4</p></div>
+            </div>
+            <div class="confidence"><span>Evidence Confidence</span><div class="conf-bar"><i id="evBar"></i></div><b id="evScore">94%</b></div>
+            <div class="scan-log" style="margin-top:16px" id="evNarrative">[GENERATED CLAIM] AIDAS는 AI 기반 야드 배정 최적화를 통해 혼잡 완화와 장비 이동 효율 개선을 지원합니다.<br/><span class="ok">[EVIDENCE] 제품 기능 + 설계서 + 소스 모듈 + 구축 사례 4건 연결</span></div>
+          </div>
+        </div>
+        <div class="card pad" style="margin-top:16px">
+          <div class="flow-title"><h3>Gap은 숨기지 않고 수주 전략으로 전환</h3><span class="tag red">Risk-Controlled Proposal</span></div>
+          <div class="grid g4">
+            <div class="value-card"><div class="vicon">✓</div><h3>FULL</h3><p>표준 기능과 실적 근거를 강조하여 즉시 대응 항목으로 제안합니다.</p></div>
+            <div class="value-card"><div class="vicon">⚙</div><h3>PARTIAL</h3><p>커스터마이징 범위·일정·비용을 명확히 하여 리스크를 통제합니다.</p></div>
+            <div class="value-card"><div class="vicon">＋</div><h3>GAP</h3><p>신규 개발·파트너 연계·단계적 로드맵 중 최적 대안을 제시합니다.</p></div>
+            <div class="value-card"><div class="vicon">?</div><h3>UNCLEAR</h3><p>고객 질의서를 자동 생성해 불명확 요구를 계약 전에 해소합니다.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scene 3 -->
+      <section class="scene" data-index="3">
+        <div class="scene-head"><div><div class="eyebrow">Use Case 02 · Documentation Autopilot</div><h1>개발자는 코드를 저장하고, AIDAS는 산출물을 완성</h1><p>IDE 저장 이벤트를 감지해 변경 영향도를 분석하고 설계서·API·테스트·릴리스 문서를 동시에 갱신합니다.</p></div><div class="head-actions"><button class="btn primary" onclick="runCodeDemo()">Ctrl+S 시연</button><button class="btn ghost" onclick="resetCodeDemo()">초기화</button></div></div>
+        <div class="code-layout">
+          <div class="card ide">
+            <div class="ide-top"><div class="traffic"><i></i><i></i><i></i></div><span>YardAllocationController.java — IntelliJ IDEA</span></div>
+            <div class="ide-body"><div class="tree"><b>OPUS-DigiPort-AI</b><br/>▾ src/main/java<br/>&nbsp;&nbsp;▾ yard<br/>&nbsp;&nbsp;&nbsp;&nbsp;▾ controller<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>YardAllocationController.java</b><br/>&nbsp;&nbsp;&nbsp;&nbsp;▸ service<br/>&nbsp;&nbsp;&nbsp;&nbsp;▸ model<br/>▸ docs<br/>▸ test</div><div><div class="save-banner" id="saveBanner">✓ SAVE EVENT 감지 · AST + Diff + Dependency 수집 완료</div><div class="editor"><span class="ln">18</span><span class="ann">@RestController</span>
+<span class="ln">19</span><span class="ann">@RequestMapping</span>(<span class="str">"/api/v1/yard"</span>)
+<span class="ln">20</span><span class="kw">public class</span> YardAllocationController {
+<span class="ln">21</span>
+<span class="add"><span class="ln">22</span>  <span class="ann">@PostMapping</span>(<span class="str">"/optimize"</span>)</span>
+<span class="add"><span class="ln">23</span>  <span class="kw">public</span> PlanResult <span class="fn">optimize</span>(</span>
+<span class="add"><span class="ln">24</span>      <span class="ann">@RequestBody</span> PlanRequest request) {</span>
+<span class="add"><span class="ln">25</span>    <span class="kw">return</span> yardService.<span class="fn">optimize</span>(request);</span>
+<span class="add"><span class="ln">26</span>  }</span>
+<span class="ln">27</span>
+<span class="ln">28</span>  <span class="comment">// AIDAS will update related artifacts</span>
+<span class="ln">29</span>}</div></div></div>
+          </div>
+          <div class="grid">
+            <div class="card pipeline">
+              <h3>자동 산출 파이프라인</h3>
+              <div class="pipe-step" id="codeStep0"><div class="pipe-icon">⌁</div><div><b>1. Change Analyzer</b><span>AST·Diff·Dependency 분석</span></div><div class="pipe-state">WAIT</div></div>
+              <div class="pipe-step" id="codeStep1"><div class="pipe-icon">◎</div><div><b>2. Impact Analyzer</b><span>영향 문서·테스트·API 탐색</span></div><div class="pipe-state">WAIT</div></div>
+              <div class="pipe-step" id="codeStep2"><div class="pipe-icon">AI</div><div><b>3. Artifact Generator</b><span>근거 기반 문서 초안 생성</span></div><div class="pipe-state">WAIT</div></div>
+              <div class="pipe-step" id="codeStep3"><div class="pipe-icon">✓</div><div><b>4. Quality &amp; Security Gate</b><span>Secret masking·일관성·형식 검증</span></div><div class="pipe-state">WAIT</div></div>
+              <div class="pipe-step" id="codeStep4"><div class="pipe-icon">Git</div><div><b>5. Version Sync</b><span>Git docs branch·Confluence 반영</span></div><div class="pipe-state">WAIT</div></div>
+            </div>
+            <div class="card diff-impact">
+              <div class="flow-title"><h3>자동 생성·갱신 결과</h3><span class="tag blue" id="artifactTime">대기 중</span></div>
+              <div class="impact-list" id="impactList">
+                <div class="impact"><i>📘</i><div><b>Functional Design</b><span>Yard Allocation API 섹션 갱신</span></div><em>WAIT</em></div>
+                <div class="impact"><i>API</i><div><b>OpenAPI Specification</b><span>POST /api/v1/yard/optimize 추가</span></div><em>WAIT</em></div>
+                <div class="impact"><i>TC</i><div><b>JUnit Test Cases</b><span>정상·경계·예외 12개 생성</span></div><em>WAIT</em></div>
+                <div class="impact"><i>↔</i><div><b>Impact Analysis</b><span>4개 컴포넌트·3개 문서 영향</span></div><em>WAIT</em></div>
+                <div class="impact"><i>RN</i><div><b>Release Note</b><span>기능 설명·호환성·주의사항</span></div><em>WAIT</em></div>
+              </div>
+              <button class="btn ghost sm" onclick="downloadArtifactSample()">산출물 샘플 다운로드</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scene 4 -->
+      <section class="scene" data-index="4">
+        <div class="scene-head"><div><div class="eyebrow">Management Value</div><h1>AIDAS가 바꾸는 것은 문서 작성이 아니라 사업 수행 방식</h1><p>제안 속도, 지식 재사용, 개발 품질, 보안을 하나의 폐쇄망 플랫폼에서 동시에 개선합니다.</p></div></div>
+        <div class="card compare">
+          <div class="before"><span class="tag red">현재 방식</span><h3>사람이 문서를 찾아 조립하고 사후에 정리</h3>
+            <div class="compare-row"><b>RFP 해석</b><span>담당자별 수작업·누락 위험</span></div>
+            <div class="compare-row"><b>제안서 작성</b><span>기존 문서 복사·개인 경험 의존</span></div>
+            <div class="compare-row"><b>개발 산출물</b><span>코딩 후 별도 작성·버전 불일치</span></div>
+            <div class="compare-row"><b>회사 지식</b><span>파일 서버와 개인 PC에 분산</span></div>
+          </div>
+          <div class="compare-arrow">→</div>
+          <div class="after"><span class="tag green">AIDAS 방식</span><h3>AI가 근거를 연결해 초안을 만들고 사람은 판단</h3>
+            <div class="compare-row"><b>RFP 구조화</b><span>요구·배점·제출조건 자동 추출</span></div>
+            <div class="compare-row"><b>제안 패키지</b><span>전략·문서·표·PPT를 동시 생성</span></div>
+            <div class="compare-row"><b>코드 동기화</b><span>저장 이벤트로 산출물 자동 갱신</span></div>
+            <div class="compare-row"><b>디지털 두뇌</b><span>제품·소스·사례가 지속 축적</span></div>
+          </div>
+        </div>
+        <div class="grid g4" style="margin-top:16px">
+          <div class="card value-card"><div class="vicon">⚡</div><h3>Speed</h3><p>수일~수주의 제안 초안 작업을 10분 이내 자동 초안 생성 목표로 전환합니다.</p><div class="target"><b>≤10분</b><span>Proposal draft<br/>설계 목표</span></div></div>
+          <div class="card value-card"><div class="vicon">◎</div><h3>Quality</h3><p>요구사항별 대응·근거·Gap을 추적하여 누락과 근거 없는 과장을 줄입니다.</p><div class="target"><b>100%</b><span>Requirement<br/>traceability 목표</span></div></div>
+          <div class="card value-card"><div class="vicon">♻</div><h3>Knowledge</h3><p>소스와 산출물, 과거 제안 및 사례를 재사용 가능한 회사 지식으로 전환합니다.</p><div class="target"><b>1 Brain</b><span>전사 제안·개발<br/>지식 플랫폼</span></div></div>
+          <div class="card value-card"><div class="vicon">🔒</div><h3>Security</h3><p>외부 생성형 AI API 없이 내부 모델과 권한·감사 체계로 민감 정보를 보호합니다.</p><div class="target"><b>Zero</b><span>External API<br/>data exposure</span></div></div>
+        </div>
+        <div class="scoreboard" style="margin-top:16px;border-radius:var(--radius)">
+          <h3>최종 제품이 경영진에게 보여줄 운영 KPI</h3>
+          <div class="score-grid">
+            <div class="score"><span>Proposal Lead Time</span><b>↓</b><small>RFP 접수 → 검토 가능한 초안</small></div>
+            <div class="score"><span>Evidence Coverage</span><b>↑</b><small>제안 문장 중 근거 연결 비율</small></div>
+            <div class="score"><span>Artifact Freshness</span><b>↑</b><small>코드와 산출물 버전 일치도</small></div>
+            <div class="score"><span>Knowledge Reuse</span><b>↑</b><small>기존 기능·사례 재사용률</small></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scene 5 -->
+      <section class="scene" data-index="5">
+        <div class="scene-head"><div><div class="eyebrow">November 2026 Target State</div><h1>11월, AIDAS는 두 개의 AI가 아닌 하나의 CLT 디지털 두뇌로 완성</h1><p>제안과 개발을 단절된 업무가 아니라 동일한 제품·소스·산출물 지식 위에서 연결합니다.</p></div></div>
+        <div class="card final-hero">
+          <div class="final-copy">
+            <h2>“고객이 요구한 것”과<br/>“우리가 실제로 보유한 것”을<br/>가장 빠르고 정확하게 연결</h2>
+            <p>AIDAS의 최종 목적물은 단순 문서 생성기가 아닙니다. 고객 요구를 수주 전략으로 만들고, 제안한 기능을 실제 소스와 개발 산출물까지 추적하는 전사 지식·생성 플랫폼입니다.</p>
+            <div class="decision-list">
+              <div class="decision"><span class="check">✓</span><div><b>제안 자동화 최종 제품</b><span>RFP 분석, 3-Way Mapping, Multi-Agent 작성, Evidence 검증, DOCX/PPT/XLSX 출력</span></div></div>
+              <div class="decision"><span class="check">✓</span><div><b>개발 산출물 자동화 최종 제품</b><span>IDE/CI 이벤트, 변경 영향도, 설계·API·테스트·릴리스 생성, Git/Confluence 동기화</span></div></div>
+              <div class="decision"><span class="check">✓</span><div><b>합성데이터 기반 품질 체계</b><span>초기 학습 데이터 확보, 정답 매핑셋, 회귀 테스트, 모델·프롬프트 변경 검증</span></div></div>
+              <div class="decision"><span class="check">✓</span><div><b>폐쇄망 운영·보안 체계</b><span>내부 LLM, Secret Masking, 역할 기반 권한, 감사로그, 외부 API 차단</span></div></div>
+            </div>
+            <div class="hero-actions"><button class="btn primary" onclick="goScene(0)">처음부터 다시 보기</button><button class="btn ghost" onclick="downloadExecutiveSummary()">Executive Summary 다운로드</button></div>
+          </div>
+          <div class="final-side">
+            <h3 style="margin:0 0 20px">2026 Delivery Roadmap</h3>
+            <div class="milestone">
+              <div class="mile"><b>7월 · 설계 1차 종료</b><span>상세 UX, API, 데이터, 보안, 합성데이터 전략 확정</span></div>
+              <div class="mile"><b>8월 · Foundation</b><span>인제스천·지식 저장소·Gateway·공통 플랫폼 구축</span></div>
+              <div class="mile"><b>9월 · Core Engine</b><span>RFP 분석·3-Way Mapping·Artifact Engine 구현</span></div>
+              <div class="mile"><b>10월 · Integrated Product</b><span>제안 Multi-Agent·Review Workflow·IDE/CI 통합</span></div>
+              <div class="mile"><b>11월 · Final Demo &amp; Handover</b><span>보안·성능·품질 검증, 사용자 시연, 운영 이관</span></div>
+            </div>
+            <div class="owner"><strong>Governance</strong><br/>총괄 조준희 팀장 · PM 강병문 수석 · 기술 박기군 수석 · 개발 GlobeAI</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="presenter" id="presenter"><div class="mic">🎤</div><p id="presenterText"></p><button class="btn dark sm" onclick="toggleNotes()">닫기</button></div>
+<div class="toast" id="toast"></div>
+<script>
+let currentScene=0, autoTimer=null, notesOn=false, rfpRunning=false, codeRunning=false;
+const noteTexts=[
+  '<b>핵심 메시지:</b> AIDAS는 기능 목록이 아니라 두 종류의 완성품을 만듭니다. RFP는 수주 제안 패키지로, 코드는 최신 개발 산출물 패키지로 전환됩니다.',
+  '<b>시연 포인트:</b> 수백 페이지 RFP를 한 번 등록하면 요구 추출, 역량 매핑, 제안 생성, 품질 검증을 거쳐 6종의 검토 가능한 산출물이 동시에 만들어집니다.',
+  '<b>차별점:</b> 생성형 AI의 문장 능력보다 요구사항-기능-소스/사례의 3-Way 근거 체인을 우선합니다. 대응 불가 항목도 숨기지 않고 Gap과 고객 질의로 전환합니다.',
+  '<b>시연 포인트:</b> 개발자가 Ctrl+S를 누르는 순간 변경 영향도를 분석해 설계서, OpenAPI, 테스트, 영향도 보고서, 릴리스 노트를 함께 갱신합니다.',
+  '<b>경영 효용:</b> 속도, 품질, 지식 재사용, 보안을 하나의 플랫폼 KPI로 관리합니다. 화면의 수치는 제품 목표 또는 데모 시나리오이며 실측치는 개발 후 검증합니다.',
+  '<b>마무리:</b> 11월 최종 목적물은 제안 AI와 문서 AI가 분리된 도구가 아니라, 고객 요구와 실제 제품 역량을 연결하는 CLT의 폐쇄망 디지털 두뇌입니다.'
+];
+const sceneButtons=[...document.querySelectorAll('.scene-btn')];
+function goScene(idx){
+  currentScene=Math.max(0,Math.min(5,idx));
+  document.querySelectorAll('.scene').forEach((s,i)=>s.classList.toggle('active',i===currentScene));
+  sceneButtons.forEach((b,i)=>b.classList.toggle('active',i===currentScene));
+  document.getElementById('sideProgress').style.width=((currentScene+1)/6*100)+'%';
+  document.getElementById('presenterText').innerHTML=noteTexts[currentScene];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+sceneButtons.forEach((b,i)=>b.addEventListener('click',()=>goScene(i)));
+function toggleNotes(){notesOn=!notesOn;document.getElementById('presenter').classList.toggle('show',notesOn);document.getElementById('noteBtn').textContent=notesOn?'노트 숨기기':'발표자 노트'}
+document.getElementById('noteBtn').onclick=toggleNotes;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+async function startAuto(){
+  if(autoTimer){clearTimeout(autoTimer);autoTimer=null;document.getElementById('autoBtn').textContent='▶ 자동 시연';return}
+  document.getElementById('autoBtn').textContent='■ 시연 중지';goScene(0);
+  const sequence=async()=>{
+    await sleep(4000); if(!autoTimer)return; goScene(1); await sleep(700); await runRfpDemo();
+    await sleep(2600); if(!autoTimer)return; goScene(2);
+    await sleep(5000); if(!autoTimer)return; goScene(3); await sleep(600); await runCodeDemo();
+    await sleep(2600); if(!autoTimer)return; goScene(4);
+    await sleep(5000); if(!autoTimer)return; goScene(5); autoTimer=null;document.getElementById('autoBtn').textContent='▶ 자동 시연';
+  };
+  autoTimer=setTimeout(()=>{},999999);sequence();
+}
+document.getElementById('autoBtn').onclick=startAuto;
+function resetRfpDemo(){
+  rfpRunning=false;document.getElementById('rfpProgress').style.width='0%';document.getElementById('rfpPct').textContent='0%';document.getElementById('rfpStatus').textContent='시연 대기';document.getElementById('scanLog').innerHTML='[READY] RFP 문서를 등록했습니다.<br/>[READY] “전체 과정 실행”을 누르십시오.';document.getElementById('kpiReq').textContent='0';document.getElementById('kpiEvidence').textContent='0%';document.getElementById('kpiTime').textContent='--:--';
+  for(let i=0;i<5;i++)document.getElementById('rfpStep'+i).className='flow-step';
+  document.querySelectorAll('#proposalOutputs small').forEach(x=>x.textContent='대기 중');
+}
+async function runRfpDemo(){
+  if(rfpRunning)return;rfpRunning=true;resetRfpDemo();rfpRunning=true;
+  const p=document.getElementById('rfpProgress'),pct=document.getElementById('rfpPct'),st=document.getElementById('rfpStatus'),log=document.getElementById('scanLog');
+  const stages=[
+    {pct:18,status:'문서 구조 파싱',log:'[INGEST] 286 pages · 42 tables · 18 appendices parsed',req:0,ev:0,time:'00:21'},
+    {pct:42,status:'요구사항·평가 기준 추출',log:'[ANALYZE] 143 requirements · 17 evaluation criteria extracted',req:143,ev:0,time:'01:46'},
+    {pct:66,status:'제품·소스·사례 3-Way 매핑',log:'[MAP] FULL 92 · PARTIAL 37 · GAP 8 · UNCLEAR 6',req:143,ev:86,time:'04:12'},
+    {pct:86,status:'Multi-Agent 제안서 생성',log:'[GENERATE] Strategy · TOC · 15 sections · 8 tables generated',req:143,ev:91,time:'08:37'},
+    {pct:100,status:'근거·누락·형식 품질 검증 완료',log:'[QUALITY] Evidence coverage 94% · 6 review items flagged',req:143,ev:94,time:'09:48'}
+  ];
+  for(let i=0;i<stages.length;i++){
+    for(let j=0;j<5;j++)document.getElementById('rfpStep'+j).className='flow-step'+(j<i?' done':j===i?' running':'');
+    const s=stages[i];p.style.width=s.pct+'%';pct.textContent=s.pct+'%';st.textContent=s.status;log.innerHTML+=`<br/><span class="${i===4?'ok':''}">${s.log}</span>`;document.getElementById('kpiReq').textContent=s.req;document.getElementById('kpiEvidence').textContent=s.ev+'%';document.getElementById('kpiTime').textContent=s.time;await sleep(850);
+  }
+  for(let j=0;j<5;j++)document.getElementById('rfpStep'+j).className='flow-step done';
+  document.querySelectorAll('#proposalOutputs small').forEach((x,i)=>{x.textContent=['Generated · v0.9','143 rows · validated','18 slides · generated','14 risks · 6 questions','6 clarification items','Evidence 94%'][i]});
+  toast('제안 패키지 초안 6종이 생성되었습니다.');rfpRunning=false;
+}
+const evidenceData=[
+  ['REQ-AI-017 · AI 기반 야드 장치 위치 최적화 및 혼잡 완화','OPUS DigiPort AI · Yard Allocation Engine · 실운영 PoC 사례','yard-allocation-service / API spec / design v2.4','94%','AIDAS는 AI 기반 야드 배정 최적화를 통해 혼잡 완화와 장비 이동 효율 개선을 지원합니다.','제품 기능 + 설계서 + 소스 모듈 + 구축 사례 4건 연결'],
+  ['REQ-DT-004 · 실시간 3D 터미널 운영상황 시각화','OPUS DigiPort Virtual Terminal · 실시간 장비·컨테이너 추적','virtual-terminal-service / 3D scene spec / interface ICD','96%','AIDAS는 TOS·ECS·GPS 데이터를 통합해 실시간 디지털 트윈 운영 화면을 제공합니다.','제품 모듈 + 인터페이스 설계 + 운영 화면 근거 연결'],
+  ['REQ-INT-031 · 기존 FMS와 양방향 작업지시·상태 연동','ECS Integration Adapter · 표준 인터페이스 보유, 고객 FMS 사양 미확정','ecs-adapter / ICD template / interface mapper','72%','표준 어댑터를 기반으로 연동 가능하나 고객 FMS API·메시지 정의 확인이 필요합니다.','표준 기능 근거 있음 · 고객 인터페이스 사양 미확정'],
+  ['REQ-SEC-009 · 외부 API를 사용하지 않는 폐쇄망 AI','AIDAS Air-Gapped Architecture · Local LLM · Secret Masking','AI Gateway / security architecture / audit policy','98%','모든 모델 추론과 지식 검색을 내부 서버에서 수행하며 외부 AI API 호출을 차단합니다.','보안 아키텍처 + 배포 설계 + 감사로그 정책 연결'],
+  ['REQ-CV-012 · 열화상 기반 위험물 누출 자동 감지','관련 표준 제품 기능 미보유 · 센서/CV 파트너 협력 검토','No production source artifact found','28%','현 제품 범위에는 해당 기능이 없어 신규 개발 또는 전문 파트너 연계가 필요합니다.','Gap으로 분류 · 신규 개발 범위·파트너 전략 제시 필요'],
+  ['REQ-OPS-025 · 운영 예측 정확도 98% 이상','정확도 정의·대상 KPI·검증 데이터 미명시','Need customer clarification before commitment','45%','정확도 산정 기준과 검증 데이터셋이 불명확하여 고객 질의 후 목표를 확정해야 합니다.','모호 요구로 분류 · 계약 전 질의 필요']
+];
+function selectEvidence(i,row){document.querySelectorAll('tr.clickable').forEach(r=>r.classList.remove('selected'));row.classList.add('selected');const d=evidenceData[i];document.getElementById('evReq').textContent=d[0];document.getElementById('evFeature').textContent=d[1];document.getElementById('evSource').textContent=d[2];document.getElementById('evScore').textContent=d[3];document.getElementById('evBar').style.width=d[3];document.getElementById('evNarrative').innerHTML='[GENERATED CLAIM] '+d[4]+'<br/><span class="ok">[EVIDENCE] '+d[5]+'</span>'}
+function resetCodeDemo(){codeRunning=false;document.getElementById('saveBanner').classList.remove('show');for(let i=0;i<5;i++){const e=document.getElementById('codeStep'+i);e.className='pipe-step';e.querySelector('.pipe-state').textContent='WAIT'};document.getElementById('artifactTime').textContent='대기 중';document.querySelectorAll('#impactList em').forEach(x=>x.textContent='WAIT')}
+async function runCodeDemo(){
+  if(codeRunning)return;codeRunning=true;resetCodeDemo();codeRunning=true;document.getElementById('saveBanner').classList.add('show');toast('Ctrl+S · 코드 변경 이벤트 감지');await sleep(500);
+  const names=['ANALYZING','4 IMPACTS','GENERATING','VALIDATED','COMMITTED'];
+  for(let i=0;i<5;i++){const e=document.getElementById('codeStep'+i);e.className='pipe-step active';e.querySelector('.pipe-state').textContent=names[i];await sleep(700);e.className='pipe-step done';e.querySelector('.pipe-state').textContent='DONE'}
+  document.getElementById('artifactTime').textContent='00:42 · 5 artifacts updated';document.querySelectorAll('#impactList em').forEach((x,i)=>x.textContent=['UPDATED','UPDATED','12 GENERATED','REPORT READY','UPDATED'][i]);toast('코드와 개발 산출물이 동일 버전으로 동기화되었습니다.');codeRunning=false;
+}
+function download(name,type,content){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function downloadProposalSample(){download('AIDAS_Proposal_Demo_Summary.md','text/markdown;charset=utf-8',`# AIDAS Proposal Demo Output\n\n- RFP: Global Smart Terminal AI RFP (Synthetic)\n- Requirements: 143\n- FULL: 92 / PARTIAL: 37 / GAP: 8 / UNCLEAR: 6\n- Evidence Coverage: 94%\n- Draft Generation: 09:48 (Demo Simulation)\n\n## Generated Package\n1. Technical Proposal\n2. Compliance Matrix\n3. Executive Presentation\n4. Risk & Assumption Register\n5. Clarification Q&A\n6. Evidence Report\n`)}
+function downloadArtifactSample(){download('AIDAS_Artifact_Impact_Report.json','application/json;charset=utf-8',JSON.stringify({event:'SAVE',source:'YardAllocationController.java',change:'POST /api/v1/yard/optimize',generated:[{artifact:'Functional Design',status:'UPDATED'},{artifact:'OpenAPI',status:'UPDATED'},{artifact:'JUnit Tests',count:12},{artifact:'Impact Analysis',components:4,documents:3},{artifact:'Release Note',status:'UPDATED'}],elapsed_seconds:42},null,2))}
+function downloadExecutiveSummary(){download('AIDAS_Executive_Summary.txt','text/plain;charset=utf-8',`AIDAS Executive Summary\n\nAIDAS는 고객 RFP와 CLT의 제품 기능·소스코드·개발 산출물·과거 사례를 폐쇄망에서 통합하여, 수주 제안 패키지와 개발 산출물 패키지를 자동 생성하는 전사 디지털 두뇌입니다.\n\n핵심 최종 산출물\n1) RFP 분석 및 요구사항 대응표\n2) 근거 기반 기술제안서와 발표자료\n3) Gap/Risk/Clarification 목록\n4) 코드 변경 기반 설계서·API·테스트·릴리스 문서\n5) 요구사항-기능-소스 3-Way Traceability\n\n2026년 11월 목표: 통합 개발, 보안·품질 검증, 최종 시연 및 운영 이관.\n`)}
+window.addEventListener('keydown',e=>{if(e.key==='ArrowRight')goScene(currentScene+1);if(e.key==='ArrowLeft')goScene(currentScene-1);if(e.key==='n'||e.key==='N')toggleNotes()});
+goScene(0);
+</script>
+</body>
+</html>
